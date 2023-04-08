@@ -32,7 +32,7 @@ export function Exercise() {
           <Icon as={Feather} name="arrow-left" color="green.500" size={6} />
         </TouchableOpacity>
         <HStack mt={4} justifyContent="space-between" alignItems="center">
-          <Heading color="gray.100" fontSize="lg" flexShrink={1}>
+          <Heading color="gray.100" fontSize="lg"  fontFamily="heading" flexShrink={1}>
             Puxada frontal
           </Heading>
 

@@ -1,14 +1,57 @@
 import { useNavigation } from "@react-navigation/native";
 import { Center, Heading, Image, ScrollView, Text, VStack } from "native-base";
 
+import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useForm, Controller } from "react-hook-form";
+
 import { Input } from "@components/Input";
 import { Button } from "@components/Button";
 
-import BackgroundImg from "@assets/background.png";
 import LogoSvg from "@assets/logo.svg";
-import { AuthNavigatorRoutesProps } from "@routes/auth.routes";
+import BackgroundImg from "@assets/background.png";
+
+type FormDataProps = {
+  name: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+};
+
+const signUpSchema = yup.object<FormDataProps>({
+  name: yup.string().required("Informe o nome."),
+  email: yup.string().required("Informe o e-mail.").email("E-mail invalído."),
+  password: yup
+    .string()
+    .required("Informe a senha.")
+    .min(7, "A senha deve ter pelo menos 7 digitos."),
+  password_confirmation: yup
+    .string()
+    .required("Confirme a senha.")
+    .oneOf([yup.ref("password")], "Confirmação de senha não confere."),
+});
 
 export function SignUp() {
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormDataProps>({ resolver: yupResolver(signUpSchema) });
+
+  function handleSignUp({
+    name,
+    email,
+    password,
+    password_confirmation,
+  }: FormDataProps) {
+    console.log({
+      name,
+      email,
+      password,
+      password_confirmation,
+    });
+  }
+
   const navigation = useNavigation();
 
   function handleGoToSingIn() {
@@ -37,21 +80,76 @@ export function SignUp() {
         </Center>
 
         <Center>
-          <Heading color="gray.100" fontSize="xl" mb={6} fontFamily="heading">
+          <Heading color="gray.100" fontSize="xl"  fontFamily="heading" mb={6} fontFamily="heading">
             Crie sua conta
           </Heading>
         </Center>
 
-        <Input placeholder="Nome" />
-        <Input
-          placeholder="E-mail"
-          keyboardType="email-address"
-          autoCapitalize="none"
+        <Controller
+          control={control}
+          name="name"
+          render={({ field: { onChange, value } }) => (
+            <Input
+              placeholder="Nome"
+              onChangeText={onChange}
+              value={value}
+              errorMessage={errors.name?.message}
+            />
+          )}
         />
-        <Input placeholder="Senha" secureTextEntry />
-        <Button title="Criar e acessar" />
 
-        <Button onPress={handleGoToSingIn} title="Voltar para login" variant="outline" mt={24} />
+        <Controller
+          control={control}
+          name="email"
+          render={({ field: { onChange, value } }) => (
+            <Input
+              placeholder="E-mail"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              onChangeText={onChange}
+              value={value}
+              errorMessage={errors.email?.message}
+            />
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="password"
+          render={({ field: { onChange, value } }) => (
+            <Input
+              placeholder="Senha"
+              secureTextEntry
+              onChangeText={onChange}
+              value={value}
+              errorMessage={errors.password?.message}
+            />
+          )}
+        />
+        <Controller
+          control={control}
+          name="password_confirmation"
+          render={({ field: { onChange, value } }) => (
+            <Input
+              placeholder="Confirmar senha"
+              secureTextEntry
+              onChangeText={onChange}
+              value={value}
+              returnKeyType="send"
+              onSubmitEditing={handleSubmit(handleSignUp)}
+              errorMessage={errors.password_confirmation?.message}
+            />
+          )}
+        />
+
+        <Button title="Criar e acessar" onPress={handleSubmit(handleSignUp)} />
+
+        <Button
+          onPress={handleGoToSingIn}
+          title="Voltar para login"
+          variant="outline"
+          mt={24}
+        />
       </VStack>
     </ScrollView>
   );

@@ -7,7 +7,12 @@ import {
   Skeleton,
   Text,
   VStack,
+  useToast,
 } from "native-base";
+
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
+
 import { ScreenHeader } from "@components/ScreenHeader";
 import { UserAvatar } from "@components/UserAvatar";
 import { Input } from "@components/Input";
@@ -17,6 +22,51 @@ const AVATAR_SIZE = 33;
 
 export function Profile() {
   const [isAvatarLoading, setIsAvatarLoading] = useState(false);
+  const [userAvatar, setUserAvatar] = useState(
+    "https://github.com/Gleitonk.png"
+  );
+
+  const toast = useToast();
+
+  async function handleUserPhotoSelect() {
+    try {
+      setIsAvatarLoading(true);
+      const image = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 1,
+        aspect: [4, 4],
+        allowsEditing: true,
+      });
+
+      if (image.canceled) {
+        return;
+      }
+
+      const imageUri = image.assets[0].uri;
+
+      if (!imageUri) {
+        return;
+      }
+
+      const imageInfo = await FileSystem.getInfoAsync(imageUri);
+
+      // @ts-ignore
+      if (imageInfo.size && imageInfo.size / 1024 / 1024 > 5) {
+        return toast.show({
+          title: "Ops! Essa imagem é muito grande.",
+          placement: "top",
+          bgColor: "error.500",
+        });
+      }
+
+      setUserAvatar(imageUri);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsAvatarLoading(false);
+    }
+  }
+
   return (
     <VStack flex={1}>
       <ScreenHeader title="Perfil " />
@@ -34,13 +84,13 @@ export function Profile() {
           ) : (
             <UserAvatar
               source={{
-                uri: "https://github.com/Gleitonk.png",
+                uri: userAvatar,
               }}
               size={AVATAR_SIZE}
             />
           )}
 
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handleUserPhotoSelect}>
             <Text
               color="green.500"
               fontSize="md"
@@ -57,7 +107,7 @@ export function Profile() {
         </Center>
 
         <VStack mt={12} pb={10}>
-          <Heading color="gray.200" fontSize="md" mb={2}>
+          <Heading color="gray.200" fontSize="md"  fontFamily="heading" mb={2}>
             Alterar senha
           </Heading>
           <Input bg="gray.600" placeholder="Senha antiga" secureTextEntry />
@@ -67,7 +117,7 @@ export function Profile() {
             placeholder="Confirmar nova senha"
             secureTextEntry
           />
-          <Button title="Atualizar senha" mt={4}/>
+          <Button title="Atualizar senha" mt={4} />
         </VStack>
       </ScrollView>
     </VStack>
