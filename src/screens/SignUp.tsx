@@ -1,15 +1,29 @@
+import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { Center, Heading, Image, ScrollView, Text, VStack } from "native-base";
+import { useAuth } from "@hooks/useAuth";
+
+import {
+  Center,
+  Heading,
+  Image,
+  ScrollView,
+  Text,
+  VStack,
+  useToast,
+} from "native-base";
 
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm, Controller } from "react-hook-form";
+
+import { api } from "@services/api";
 
 import { Input } from "@components/Input";
 import { Button } from "@components/Button";
 
 import LogoSvg from "@assets/logo.svg";
 import BackgroundImg from "@assets/background.png";
+import { AppError } from "@utils/AppError";
 
 type FormDataProps = {
   name: string;
@@ -32,24 +46,34 @@ const signUpSchema = yup.object<FormDataProps>({
 });
 
 export function SignUp() {
+  const { signIn } = useAuth();
+  const toast = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
   const {
     control,
     handleSubmit,
     formState: { errors },
   } = useForm<FormDataProps>({ resolver: yupResolver(signUpSchema) });
 
-  function handleSignUp({
-    name,
-    email,
-    password,
-    password_confirmation,
-  }: FormDataProps) {
-    console.log({
-      name,
-      email,
-      password,
-      password_confirmation,
-    });
+  async function handleSignUp({ name, email, password }: FormDataProps) {
+    try {
+      setIsLoading(true);
+      await api.post("/users", {
+        name,
+        email,
+        password,
+      });
+
+      signIn(email, password);
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+      const title = isAppError
+        ? error.message
+        : "Não foi possível criar sua conta. Tente novamente mais tarde.";
+      toast.show({ title, bg: "red.500", placement: "top" });
+      setIsLoading(false);
+    }
   }
 
   const navigation = useNavigation();
@@ -80,7 +104,7 @@ export function SignUp() {
         </Center>
 
         <Center>
-          <Heading color="gray.100" fontSize="xl"  fontFamily="heading" mb={6} fontFamily="heading">
+          <Heading color="gray.100" fontSize="xl" fontFamily="heading" mb={6}>
             Crie sua conta
           </Heading>
         </Center>
@@ -142,7 +166,11 @@ export function SignUp() {
           )}
         />
 
-        <Button title="Criar e acessar" onPress={handleSubmit(handleSignUp)} />
+        <Button
+          title="Criar e acessar"
+          onPress={handleSubmit(handleSignUp)}
+          isLoading={isLoading}
+        />
 
         <Button
           onPress={handleGoToSingIn}

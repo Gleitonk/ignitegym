@@ -1,16 +1,19 @@
 import { HStack, Heading, Icon, Text, VStack } from "native-base";
 import { MaterialIcons } from "@expo/vector-icons";
 
+import { useAuth } from "@hooks/useAuth";
 import { UserAvatar } from "@components/UserAvatar";
 import { TouchableOpacity } from "react-native";
 
+import defaultUserAvatar from "@assets/userAvatarDefault.png";
+
 export function HomeHeader() {
+  const { user, signOut } = useAuth();
+
   return (
     <HStack bg="gray.500" pt={16} pb={5} px={8} alignItems="center">
       <UserAvatar
-        source={{
-          uri: "https://github.com/Gleitonk.png",
-        }}
+        source={user.avatar ? { uri: user.avatar } : defaultUserAvatar}
         size={16}
         mr={4}
       />
@@ -19,12 +22,18 @@ export function HomeHeader() {
           Olá,
         </Text>
         <Heading color="gray.100" fontSize="md" fontFamily="heading">
-          Gleiton
+          {user.name}
         </Heading>
       </VStack>
 
       <TouchableOpacity>
-        <Icon as={MaterialIcons} name="logout" color="gray.200" size={7} />
+        <Icon
+          as={MaterialIcons}
+          name="logout"
+          color="gray.200"
+          size={7}
+          onPress={signOut}
+        />
       </TouchableOpacity>
     </HStack>
   );
